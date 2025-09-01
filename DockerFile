@@ -1,0 +1,28 @@
+# Use the official Dart SDK image as the base for building
+FROM dart:stable AS build
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the pubspec files and install dependencies
+COPY pubspec.* ./
+RUN dart pub get
+
+# Copy the rest of the application code
+COPY . .
+
+# Compile the Dart server to an executable
+RUN dart compile exe bin/server.dart -o bin/server
+
+# Use a minimal image to run the app
+FROM scratch
+
+# Copy the compiled executable and runtime files
+COPY --from=build /runtime/ /
+COPY --from=build /app/bin/server /app/bin/
+
+# Expose the port your app runs on (default for Dart Frog is 8080)
+EXPOSE 8080
+
+# Run the executable
+CMD ["/app/bin/server"]
